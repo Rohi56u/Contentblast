@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ContentBlast</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--s1:#111118;--s2:#1a1a24;--bdr:#2a2a3a;--acc:#7c3aed;--acc2:#06b6d4;--ok:#10b981;--err:#ef4444;--warn:#f59e0b;--tx:#e2e8f0;--tx2:#94a3b8;--tg:#229ED9;--fb:#1877F2;--rd:#FF4500;--dc:#5865F2;--wa:#25D366}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Syne',sans-serif;min-height:100vh}
+.wrap{display:flex;min-height:100vh}
+.sidebar{width:210px;background:var(--s1);border-right:1px solid var(--bdr);padding:18px 0;position:fixed;height:100vh;display:flex;flex-direction:column;z-index:10}
+.logo{padding:0 16px 16px;border-bottom:1px solid var(--bdr);margin-bottom:10px}
+.logo-name{font-size:16px;font-weight:800;background:linear-gradient(135deg,var(--acc),var(--acc2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-family:'Space Mono',monospace;font-size:9px;color:var(--tx2);letter-spacing:2px;margin-top:2px}
+.nav-item{padding:9px 16px;cursor:pointer;color:var(--tx2);font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px;transition:all .15s;border-left:3px solid transparent}
+.nav-item:hover{color:var(--tx);background:var(--s2)}
+.nav-item.active{color:var(--tx);border-left-color:var(--acc);background:var(--s2)}
+.svr-status{margin-top:auto;padding:10px 16px;border-top:1px solid var(--bdr);font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot.r{background:var(--err)}
+.dot.g{background:var(--ok);animation:glow 2s infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.4)}50%{box-shadow:0 0 0 5px rgba(16,185,129,0)}}
+.main{margin-left:210px;flex:1;padding:24px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+.stat{background:var(--s1);border:1px solid var(--bdr);border-radius:10px;padding:16px}
+.stat-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--tx2);margin-bottom:6px}
+.stat-val{font-size:26px;font-weight:800;font-family:'Space Mono',monospace}
+.sec{display:none}.sec.active{display:block}
+.ph{margin-bottom:20px}.pt{font-size:21px;font-weight:800}.ps{color:var(--tx2);font-size:12px;margin-top:3px}
+.phrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.card{background:var(--s1);border:1px solid var(--bdr);border-radius:12px;padding:18px}
+.card-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--tx2);margin-bottom:12px}
+.mt{margin-top:14px}
+.fgrp{margin-bottom:14px}
+.flbl{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--tx2);margin-bottom:6px;display:block}
+.finp,.fsel{width:100%;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;color:var(--tx);font-family:'Space Mono',monospace;font-size:12px;outline:none;transition:border-color .15s}
+.finp:focus,.fsel:focus{border-color:var(--acc)}
+.finp::placeholder{color:var(--tx2);opacity:.5}
+.fsel{font-family:'Syne',sans-serif;font-size:13px;cursor:pointer}
+.irow{display:flex;gap:8px}.irow .finp{flex:1}
+.btn{padding:10px 18px;border-radius:8px;border:none;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-pri{background:var(--acc);color:#fff;width:100%}
+.btn-pri:hover:not(:disabled){background:#6d28d9;transform:translateY(-1px)}
+.btn-pri:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn-sec{background:var(--s2);color:var(--tx);border:1px solid var(--bdr)}
+.btn-sec:hover{border-color:var(--acc)}
+.btn-sm{padding:6px 12px;font-size:11px}
+.btn-find{background:var(--acc2);color:#fff;width:100%}
+.btn-find:hover:not(:disabled){filter:brightness(1.1)}
+.btn-find:disabled{opacity:.45;cursor:not-allowed}
+.btn-danger{background:rgba(239,68,68,.12);color:var(--err);border:1px solid rgba(239,68,68,.25)}
+.btn-danger:hover{background:var(--err);color:#fff}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.steps{display:flex;align-items:center;gap:0;margin-bottom:20px}
+.step-item{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--tx2)}
+.step-item.active{color:var(--tx)}
+.step-item.done{color:var(--ok)}
+.step-num{width:24px;height:24px;border-radius:50%;border:2px solid var(--bdr);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.step-item.active .step-num{border-color:var(--acc);background:var(--acc);color:#fff}
+.step-item.done .step-num{border-color:var(--ok);background:var(--ok);color:#fff}
+.step-line{flex:1;height:2px;background:var(--bdr);margin:0 6px}
+.step-line.done{background:var(--ok)}
+.vprev{display:none;border:1px solid var(--bdr);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.vprev.show{display:block}
+.vprev img{width:100%;height:130px;object-fit:cover;display:none}
+.vprev img.show{display:block}
+.vprev-info{padding:12px}
+.vprev-badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:1px}
+.vprev-badge.youtube{background:#FF0000;color:#fff}
+.vprev-badge.instagram{background:#E1306C;color:#fff}
+.vprev-title{font-size:14px;font-weight:700;line-height:1.3;margin-top:6px}
+.vprev-ch{font-size:11px;color:var(--tx2);margin-top:2px}
+.disc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:380px;overflow-y:auto;margin-bottom:12px}
+.disc-item{background:var(--s2);border:2px solid var(--bdr);border-radius:8px;padding:10px;cursor:pointer;transition:all .15s}
+.disc-item:hover{border-color:var(--acc2)}
+.disc-item.sel{border-color:var(--acc)}
+.disc-item.sel.ri{border-color:var(--rd);background:rgba(255,69,0,.07)}
+.disc-item.sel.ti{border-color:var(--tg);background:rgba(34,158,217,.07)}
+.disc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;gap:6px}
+.disc-name{font-size:12px;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.disc-plat{font-size:9px;font-weight:800;padding:2px 5px;border-radius:3px;letter-spacing:.5px;flex-shrink:0}
+.disc-plat.reddit{background:rgba(255,69,0,.2);color:var(--rd)}
+.disc-plat.telegram{background:rgba(34,158,217,.2);color:var(--tg)}
+.disc-chk{width:15px;height:15px;border-radius:3px;border:2px solid var(--bdr);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px}
+.disc-item.sel .disc-chk{background:var(--acc);border-color:var(--acc);color:#fff}
+.disc-item.sel.ri .disc-chk{background:var(--rd);border-color:var(--rd)}
+.disc-item.sel.ti .disc-chk{background:var(--tg);border-color:var(--tg)}
+.disc-members{font-size:10px;color:var(--tx2);font-family:'Space Mono',monospace;margin-bottom:3px}
+.disc-desc{font-size:10px;color:var(--tx2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sel-bar{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;margin-bottom:10px;font-size:12px;font-weight:700}
+.sel-count{color:var(--acc2)}
+.sel-actions{display:flex;gap:6px}
+.kw-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.kw-pill{background:var(--s2);border:1px solid var(--bdr);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;color:var(--acc2)}
+.prog-sec{margin-top:14px;display:none}
+.prog-sec.show{display:block}
+.prog-hd{display:flex;justify-content:space-between;margin-bottom:6px}
+.prog-bar{height:5px;background:var(--s2);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:3px;transition:width .3s;width:0%}
+.log{background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:10px;max-height:170px;overflow-y:auto;font-family:'Space Mono',monospace;font-size:11px}
+.le{padding:2px 0}
+.le.ok{color:var(--ok)}.le.er{color:var(--err)}.le.in{color:var(--acc2)}.le.wn{color:var(--warn)}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
+.sum-item{text-align:center;padding:12px;background:var(--s2);border-radius:8px}
+.sum-n{font-size:24px;font-weight:800;font-family:'Space Mono',monospace}
+.sum-l{font-size:10px;color:var(--tx2);margin-top:3px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;padding:8px 10px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--tx2);border-bottom:1px solid var(--bdr)}
+.tbl td{padding:10px 10px;font-size:12px;border-bottom:1px solid var(--bdr)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--s2)}
+.pb{display:inline-flex;align-items:center;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700}
+.pb-tg{background:rgba(34,158,217,.2);color:var(--tg)}
+.pb-fb{background:rgba(24,119,242,.2);color:var(--fb)}
+.pb-rd{background:rgba(255,69,0,.2);color:var(--rd)}
+.pb-dc{background:rgba(88,101,242,.2);color:var(--dc)}
+.pb-wa{background:rgba(37,211,102,.2);color:var(--wa)}
+.sb{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;font-family:'Space Mono',monospace}
+.sb-ok{background:rgba(16,185,129,.2);color:var(--ok)}
+.sb-er{background:rgba(239,68,68,.2);color:var(--err)}
+.sb-wn{background:rgba(245,158,11,.2);color:var(--warn)}
+.tab-bar{display:flex;gap:3px;margin-bottom:14px;background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:3px;width:fit-content}
+.tab{padding:6px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;color:var(--tx2);transition:all .15s}
+.tab.active{background:var(--acc);color:#fff}
+.tab:hover:not(.active){color:var(--tx)}
+.moverlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100}
+.moverlay.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--bdr);border-radius:14px;padding:22px;width:420px;max-width:92vw;animation:sin .2s ease}
+@keyframes sin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.modal-title{font-size:16px;font-weight:800;margin-bottom:16px}
+.modal-foot{display:flex;gap:8px;margin-top:16px;justify-content:flex-end}
+.empty{text-align:center;padding:28px 16px;color:var(--tx2);font-size:13px}
+.empty .ico{font-size:26px;margin-bottom:7px}
+.txm{color:var(--tx2);font-size:12px}
+.mono{font-family:'Space Mono',monospace}
+.setup-cmd{background:var(--s2);border:1px solid var(--bdr);border-radius:6px;padding:10px 14px;font-size:12px;font-family:'Space Mono',monospace;color:var(--ok);margin-top:6px;cursor:pointer;user-select:all}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .8s linear infinite;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-name">ContentBlast</div>
+    <div class="logo-sub">DISTRIBUTION ENGINE</div>
+  </div>
+  <nav>
+    <div class="nav-item active" onclick="goto('find',this)">🎯 Find &amp; Distribute</div>
+    <div class="nav-item" onclick="goto('manual',this)">📋 Manual Groups</div>
+    <div class="nav-item" onclick="goto('campaigns',this)">📊 Campaigns</div>
+    <div class="nav-item" onclick="goto('setup',this)">⚙️ Setup Guide</div>
+  </nav>
+  <div class="svr-status">
+    <div class="dot r" id="svrDot"></div>
+    <span id="svrTxt">Connecting...</span>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="stats">
+    <div class="stat"><div class="stat-lbl">Groups Saved</div><div class="stat-val" id="sg">—</div></div>
+    <div class="stat"><div class="stat-lbl">Campaigns</div><div class="stat-val" id="sc">—</div></div>
+    <div class="stat"><div class="stat-lbl">Posts Sent</div><div class="stat-val" style="color:var(--ok)" id="sp">—</div></div>
+    <div class="stat"><div class="stat-lbl">Failed</div><div class="stat-val" style="color:var(--err)" id="sf">—</div></div>
+  </div>
+
+  <!-- FIND & DISTRIBUTE -->
+  <div class="sec active" id="sec-find">
+    <div class="ph"><div class="pt">🎯 Find &amp; Distribute</div><div class="ps">Link daalo → System groups dhundhe → Select → Post!</div></div>
+    <div class="steps">
+      <div class="step-item active" id="st1"><div class="step-num">1</div>Link</div>
+      <div class="step-line" id="sl1"></div>
+      <div class="step-item" id="st2"><div class="step-num">2</div>Find</div>
+      <div class="step-line" id="sl2"></div>
+      <div class="step-item" id="st3"><div class="step-num">3</div>Select</div>
+      <div class="step-line" id="sl3"></div>
+      <div class="step-item" id="st4"><div class="step-num">4</div>Post</div>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-title">Step 1 — Your Content Link</div>
+          <div class="fgrp">
+            <label class="flbl">YouTube URL</label>
+            <div class="irow"><input class="finp" id="ytUrl" placeholder="https://youtu.be/..."/><button class="btn btn-sec btn-sm" onclick="previewLink('youtube')">Fetch</button></div>
+          </div>
+          <div class="fgrp">
+            <label class="flbl">Instagram URL</label>
+            <div class="irow"><input class="finp" id="igUrl" placeholder="https://instagram.com/reel/..."/><button class="btn btn-sec btn-sm" onclick="previewLink('instagram')">Fetch</button></div>
+          </div>
+          <div class="fgrp">
+            <label class="flbl">Niche</label>
+            <select class="fsel" id="niche">
+              <option value="general">🌐 General</option><option value="tech">💻 Tech</option><option value="gaming">🎮 Gaming</option><option value="finance">💰 Finance</option><option value="fitness">💪 Fitness</option><option value="food">🍕 Food</option><option value="travel">✈️ Travel</option><option value="education">📚 Education</option><option value="entertainment">🎭 Entertainment</option><option value="business">💼 Business</option>
+            </select>
+          </div>
+          <div class="fgrp">
+            <label class="flbl">Custom Keywords <span class="txm">(optional)</span></label>
+            <input class="finp" id="customKw" placeholder="coding, javascript, tutorial..."/>
+            <div class="txm" style="margin-top:4px">Auto-extracted from title if left empty</div>
+          </div>
+          <button class="btn btn-find" id="findBtn" onclick="findGroups()">🔍 Find Relevant Groups</button>
+        </div>
+
+        <div class="card prog-sec" id="progCard">
+          <div class="card-title">Live Progress</div>
+          <div class="prog-hd">
+            <span class="txm mono" id="progTxt" style="font-size:11px">Starting...</span>
+            <span class="mono" id="progCount" style="font-size:11px;font-weight:700">0/0</span>
+          </div>
+          <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+          <div class="log" id="logFeed"></div>
+        </div>
+
+        <div class="card mt" id="sumCard" style="display:none">
+          <div class="card-title">Result</div>
+          <div id="sumContent"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="vprev card" id="vPrev">
+          <img id="vThumb" src="" alt=""/>
+          <div class="vprev-info">
+            <span id="vBadge" class="vprev-badge"></span>
+            <div id="vTitle" class="vprev-title"></div>
+            <div id="vCh" class="vprev-ch"></div>
+          </div>
+        </div>
+
+        <div class="card" id="emptyDisc">
+          <div class="empty"><div class="ico">🔍</div><div style="font-weight:700;margin-bottom:4px">No groups searched yet</div><div class="txm">Paste a link and click Find</div></div>
+        </div>
+
+        <div class="card" id="discCard" style="display:none">
+          <div class="card-title" id="discTitle">Found Groups</div>
+          <div class="kw-pills" id="kwPills"></div>
+          <div class="sel-bar">
+            <span><span class="sel-count" id="selCount">0</span> selected</span>
+            <div class="sel-actions">
+              <button class="btn btn-sec btn-sm" onclick="selectAll()">All</button>
+              <button class="btn btn-sec btn-sm" onclick="selectNone()">None</button>
+            </div>
+          </div>
+          <div class="disc-grid" id="discGrid"></div>
+          <button class="btn btn-pri" id="postBtn" onclick="postSelected()" disabled>🚀 Post to Selected</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL GROUPS -->
+  <div class="sec" id="sec-manual">
+    <div class="phrow">
+      <div><div class="pt">📋 Saved Groups</div><div class="ps">Your manually added groups</div></div>
+      <button class="btn btn-pri" style="width:auto" onclick="openAddModal()">+ Add Group</button>
+    </div>
+    <div class="card">
+      <div class="tab-bar">
+        <div class="tab active" onclick="filterG('all',this)">All</div>
+        <div class="tab" onclick="filterG('telegram',this)">Telegram</div>
+        <div class="tab" onclick="filterG('facebook',this)">Facebook</div>
+        <div class="tab" onclick="filterG('reddit',this)">Reddit</div>
+        <div class="tab" onclick="filterG('discord',this)">Discord</div>
+        <div class="tab" onclick="filterG('whatsapp',this)">WhatsApp</div>
+      </div>
+      <table class="tbl"><thead><tr><th>Name</th><th>Platform</th><th>Niche</th><th>ID</th><th>Last Post</th><th>Total</th><th></th></tr></thead>
+      <tbody id="gBody"><tr><td colspan="7"><div class="empty"><div class="ico">👥</div>No groups saved</div></td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- CAMPAIGNS -->
+  <div class="sec" id="sec-campaigns">
+    <div class="ph"><div class="pt">📊 Campaigns</div><div class="ps">All distribution runs</div></div>
+    <div class="card">
+      <table class="tbl"><thead><tr><th>Video</th><th>Status</th><th>Posted</th><th>Failed</th><th>Total</th><th>Date</th></tr></thead>
+      <tbody id="cBody"><tr><td colspan="6"><div class="empty"><div class="ico">📊</div>No campaigns yet</div></td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- SETUP GUIDE -->
+  <div class="sec" id="sec-setup">
+    <div class="ph"><div class="pt">⚙️ Setup Guide</div><div class="ps">Start the backend to use all features</div></div>
+    <div class="card">
+      <div class="card-title">Quick Start Commands</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <div class="txm" style="font-weight:700;color:var(--tx);margin-bottom:4px">1. Install Dependencies</div>
+          <div class="setup-cmd">cd content-distributor && npm install && npx playwright install chromium</div>
+        </div>
+        <div>
+          <div class="txm" style="font-weight:700;color:var(--tx);margin-bottom:4px">2. Setup Config</div>
+          <div class="setup-cmd">cp .env.example .env</div>
+          <div class="txm" style="margin-top:4px">Then open .env and fill your credentials</div>
+        </div>
+        <div>
+          <div class="txm" style="font-weight:700;color:var(--tx);margin-bottom:4px">3. Start Server</div>
+          <div class="setup-cmd">npm start</div>
+        </div>
+        <div style="background:var(--s2);border:1px solid var(--bdr);border-radius:8px;padding:14px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:10px">Platform Credentials:</div>
+          <div class="txm" style="line-height:2">
+            <strong style="color:var(--tg)">Telegram:</strong> @BotFather → /newbot → copy token → TELEGRAM_BOT_TOKEN<br>
+            <strong style="color:var(--rd)">Reddit:</strong> reddit.com/prefs/apps → Create script app → REDDIT_CLIENT_ID + SECRET<br>
+            <strong style="color:var(--dc)">Discord:</strong> discord.com/developers → New App → Bot → DISCORD_BOT_TOKEN<br>
+            <strong style="color:var(--fb)">Facebook:</strong> Just add email + password to .env (Playwright handles login)<br>
+            <strong style="color:var(--wa)">WhatsApp:</strong> First run → scan QR in terminal → session auto-saved
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<!-- ADD GROUP MODAL -->
+<div class="moverlay" id="addModal">
+  <div class="modal">
+    <div class="modal-title">Add Group</div>
+    <div class="fgrp">
+      <label class="flbl">Platform</label>
+      <select class="fsel" id="mPlat" onchange="updateHint()">
+        <option value="telegram">✈️ Telegram</option><option value="facebook">📘 Facebook</option><option value="reddit">🔴 Reddit</option><option value="discord">🎮 Discord</option><option value="whatsapp">💬 WhatsApp</option>
+      </select>
+    </div>
+    <div class="fgrp"><label class="flbl">Group Name</label><input class="finp" id="mName" placeholder="My Community"/></div>
+    <div class="fgrp">
+      <label class="flbl">Group ID</label>
+      <input class="finp" id="mId" placeholder="@username or -100xxxxxxx"/>
+      <div class="txm" style="margin-top:4px" id="mHint">Telegram: @username or -100xxxxxxxxx</div>
+    </div>
+    <div class="fgrp">
+      <label class="flbl">Niche</label>
+      <select class="fsel" id="mNiche"><option value="general">General</option><option value="tech">Tech</option><option value="gaming">Gaming</option><option value="finance">Finance</option><option value="fitness">Fitness</option><option value="food">Food</option></select>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-sec" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-pri" style="width:auto" onclick="saveGroup()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API='http://localhost:3000/api'
+let discovered=[],selectedIds=new Set(),allGroups=[],gFilter='all',vData=null
+
+window.addEventListener('load',()=>{
+  checkSvr()
+  setInterval(checkSvr,12000)
+  loadStats()
+  loadGroups()
+})
+
+async function checkSvr(){
+  try{
+    const r=await fetch(`${API}/health`,{signal:AbortSignal.timeout(3000)})
+    if(r.ok){setOnline();loadStats();return}
+  }catch(e){}
+  setOffline()
+}
+function setOnline(){document.getElementById('svrDot').className='dot g';document.getElementById('svrTxt').textContent='Server online ✅'}
+function setOffline(){document.getElementById('svrDot').className='dot r';document.getElementById('svrTxt').textContent='Run: npm start'}
+
+function goto(name,el){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'))
+  document.getElementById('sec-'+name).classList.add('active')
+  el.classList.add('active')
+  if(name==='campaigns')loadCampaigns()
+}
+
+async function loadStats(){
+  try{const r=await fetch(`${API}/stats`);const d=await r.json();if(d.success){document.getElementById('sg').textContent=d.stats.totalGroups;document.getElementById('sc').textContent=d.stats.totalCampaigns;document.getElementById('sp').textContent=d.stats.totalPosts;document.getElementById('sf').textContent=d.stats.totalFailed}}catch(e){}
+}
+
+async function previewLink(type){
+  const url=(type==='youtube'?document.getElementById('ytUrl'):document.getElementById('igUrl')).value.trim()
+  if(!url)return
+  try{
+    const r=await fetch(`${API}/preview`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})})
+    const d=await r.json()
+    if(d.success){vData=d.data;showPreview(d.data)}
+    else alert('Could not fetch: '+d.error)
+  }catch(e){alert('Server not running. Start with: npm start')}
+}
+
+function showPreview(data){
+  const p=document.getElementById('vPrev');p.classList.add('show')
+  const img=document.getElementById('vThumb')
+  if(data.thumbnailUrl){img.src=data.thumbnailUrl;img.className='show';img.onerror=()=>{img.className=''}}
+  const b=document.getElementById('vBadge');b.textContent=data.platform==='youtube'?'YOUTUBE':'INSTAGRAM';b.className='vprev-badge '+(data.platform||'youtube')
+  document.getElementById('vTitle').textContent=data.title||'Video'
+  document.getElementById('vCh').textContent=data.channelName||data.authorName||''
+}
+
+async function findGroups(){
+  const ytUrl=document.getElementById('ytUrl').value.trim()
+  const igUrl=document.getElementById('igUrl').value.trim()
+  const niche=document.getElementById('niche').value
+  const customKw=document.getElementById('customKw').value.trim()
+  if(!ytUrl&&!igUrl){alert('Please paste a YouTube or Instagram link first');return}
+  const btn=document.getElementById('findBtn')
+  btn.disabled=true;btn.innerHTML='<span class="spin">⟳</span> Searching...'
+  document.getElementById('emptyDisc').style.display='none'
+  document.getElementById('discCard').style.display='none'
+  try{
+    const body={niche,platforms:['reddit','telegram'],limit:20}
+    if(customKw)body.keywords=customKw.split(',').map(k=>k.trim()).filter(Boolean)
+    else if(vData?.title){body.videoTitle=vData.title;body.niche=niche}
+    else body.keywords=[niche,'video','content']
+    const r=await fetch(`${API}/discover`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+    const d=await r.json()
+    if(!d.success){alert('Discovery failed: '+d.error);return}
+    discovered=d.groups;selectedIds=new Set()
+    renderDiscovered(d.groups,d.keywords||[])
+    setStep(2)
+  }catch(e){alert('Server not running! Start with: npm start')}
+  finally{btn.disabled=false;btn.innerHTML='🔍 Find Relevant Groups'}
+}
+
+function renderDiscovered(groups,keywords){
+  document.getElementById('kwPills').innerHTML=keywords.map(k=>`<span class="kw-pill">${k}</span>`).join('')
+  document.getElementById('discTitle').textContent=`Found ${groups.length} Relevant Groups`
+  const grid=document.getElementById('discGrid')
+  if(!groups.length){
+    grid.innerHTML='<div style="grid-column:span 2"><div class="empty"><div class="ico">😔</div>No groups found. Try different keywords.</div></div>'
+    document.getElementById('discCard').style.display='block'
+    return
+  }
+  grid.innerHTML=groups.map((g,i)=>`
+    <div class="disc-item ${g.platform==='reddit'?'ri':'ti'}" id="di-${i}" onclick="toggleG(${i})">
+      <div class="disc-head">
+        <div class="disc-name">${g.name}</div>
+        <span class="disc-plat ${g.platform}">${g.platform==='reddit'?'REDDIT':'TG'}</span>
+        <div class="disc-chk" id="dc-${i}"></div>
+      </div>
+      <div class="disc-members">👥 ${fmtNum(g.members)} members</div>
+      <div class="disc-desc">${g.description||'No description available'}</div>
+    </div>
+  `).join('')
+  document.getElementById('emptyDisc').style.display='none'
+  document.getElementById('discCard').style.display='block'
+  updateSel()
+}
+
+function toggleG(i){
+  const id=discovered[i].id
+  const el=document.getElementById('di-'+i)
+  const chk=document.getElementById('dc-'+i)
+  if(selectedIds.has(id)){selectedIds.delete(id);el.classList.remove('sel');chk.textContent=''}
+  else{selectedIds.add(id);el.classList.add('sel');chk.textContent='✓'}
+  updateSel()
+}
+function selectAll(){discovered.forEach((_,i)=>{selectedIds.add(discovered[i].id);document.getElementById('di-'+i)?.classList.add('sel');const c=document.getElementById('dc-'+i);if(c)c.textContent='✓'});updateSel()}
+function selectNone(){selectedIds.clear();discovered.forEach((_,i)=>{document.getElementById('di-'+i)?.classList.remove('sel');const c=document.getElementById('dc-'+i);if(c)c.textContent=''});updateSel()}
+function updateSel(){document.getElementById('selCount').textContent=selectedIds.size;document.getElementById('postBtn').disabled=selectedIds.size===0;if(selectedIds.size>0)setStep(3)}
+
+async function postSelected(){
+  if(!selectedIds.size)return
+  const ytUrl=document.getElementById('ytUrl').value.trim()
+  const igUrl=document.getElementById('igUrl').value.trim()
+  const niche=document.getElementById('niche').value
+  if(!ytUrl&&!igUrl){alert('Please enter a URL');return}
+  const btn=document.getElementById('postBtn')
+  btn.disabled=true;btn.innerHTML='⏳ Posting...'
+  const pc=document.getElementById('progCard');pc.classList.add('show')
+  document.getElementById('sumCard').style.display='none'
+  document.getElementById('logFeed').innerHTML=''
+  document.getElementById('progFill').style.width='0%'
+  setStep(4)
+  try{
+    const r=await fetch(`${API}/find-and-distribute`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({youtubeUrl:ytUrl||null,instagramUrl:igUrl||null,niche,selectedGroupIds:[...selectedIds]})})
+    const d=await r.json()
+    if(!d.success){alert('Error: '+d.error);resetPBtn();return}
+    const sse=new EventSource(`${API}/stream/${d.sessionId}`)
+    sse.onmessage=(e)=>{
+      const ev=JSON.parse(e.data)
+      handleEv(ev,selectedIds.size)
+      if(ev.type==='done'||ev.type==='completed'){sse.close();resetPBtn();loadStats();showSum(ev)}
+      if(ev.type==='error'){sse.close();addLog('Error: '+ev.error,'er');resetPBtn()}
+    }
+    sse.onerror=()=>{sse.close();resetPBtn()}
+  }catch(e){alert('Server not running. Start: npm start');resetPBtn()}
+}
+
+function handleEv(ev,total){
+  if(ev.type==='link_processed')addLog(`📺 "${ev.videoData?.title}"`, 'in')
+  else if(ev.type==='keywords')addLog(`🔑 Keywords: ${ev.keywords?.join(', ')}`,'in')
+  else if(ev.type==='status'||ev.type==='waiting')addLog(ev.message,'wn')
+  else if(ev.type==='post_success'){
+    addLog(`✅ [${ev.group?.platform?.toUpperCase()}] ${ev.group?.name}`,'ok')
+    const pct=ev.total?Math.round((ev.index+1)/ev.total*100):0
+    document.getElementById('progFill').style.width=pct+'%'
+    document.getElementById('progCount').textContent=`${ev.index+1}/${ev.total}`
+  }
+  else if(ev.type==='post_failed'){
+    addLog(`❌ [${ev.group?.platform?.toUpperCase()}] ${ev.group?.name}`,'er')
+    const pct=ev.total?Math.round((ev.index+1)/ev.total*100):0
+    document.getElementById('progFill').style.width=pct+'%'
+  }
+  else if(ev.type==='completed'||ev.type==='done'){
+    addLog(`🎉 Done! ${ev.totalPosted||0} posted, ${ev.totalFailed||0} failed`,'ok')
+    document.getElementById('progFill').style.width='100%'
+  }
+}
+
+function addLog(msg,cls){
+  const feed=document.getElementById('logFeed')
+  const el=document.createElement('div')
+  el.className='le '+(cls||'in')
+  el.textContent=`[${new Date().toLocaleTimeString()}] ${msg}`
+  feed.appendChild(el);feed.scrollTop=feed.scrollHeight
+  document.getElementById('progTxt').textContent=msg
+}
+
+function showSum(data){
+  document.getElementById('sumCard').style.display='block'
+  document.getElementById('sumContent').innerHTML=`
+    <div class="sum-grid">
+      <div class="sum-item"><div class="sum-n" style="color:var(--ok)">${data.totalPosted||0}</div><div class="sum-l">POSTED</div></div>
+      <div class="sum-item"><div class="sum-n" style="color:var(--err)">${data.totalFailed||0}</div><div class="sum-l">FAILED</div></div>
+      <div class="sum-item"><div class="sum-n">${(data.totalPosted||0)+(data.totalFailed||0)}</div><div class="sum-l">TOTAL</div></div>
+    </div>`
+}
+
+function resetPBtn(){const b=document.getElementById('postBtn');b.disabled=selectedIds.size===0;b.innerHTML='🚀 Post to Selected'}
+
+function setStep(n){
+  for(let i=1;i<=4;i++){
+    const el=document.getElementById('st'+i)
+    const line=document.getElementById('sl'+i)
+    el.classList.remove('active','done')
+    if(line)line.classList.remove('done')
+    if(i<n){el.classList.add('done');if(line)line.classList.add('done')}
+    if(i===n)el.classList.add('active')
+  }
+}
+
+async function loadGroups(){
+  try{const r=await fetch(`${API}/groups`);const d=await r.json();if(d.success){allGroups=d.groups;renderGroups()}}catch(e){}
+}
+
+function renderGroups(){
+  const f=gFilter==='all'?allGroups:allGroups.filter(g=>g.platform===gFilter)
+  const tb=document.getElementById('gBody')
+  const pe={telegram:'✈️',facebook:'📘',reddit:'🔴',discord:'🎮',whatsapp:'💬'}
+  if(!f.length){tb.innerHTML='<tr><td colspan="7"><div class="empty"><div class="ico">👥</div>No groups</div></td></tr>';return}
+  tb.innerHTML=f.map(g=>`<tr><td><strong>${g.group_name}</strong></td><td><span class="pb pb-${g.platform}">${pe[g.platform]||'🌐'} ${g.platform}</span></td><td class="txm">${g.niche}</td><td class="mono txm" style="font-size:10px">${g.group_id}</td><td class="txm">${g.last_posted?fmtDate(g.last_posted):'—'}</td><td class="mono">${g.total_posts}</td><td><button class="btn btn-danger btn-sm" onclick="delGroup('${g.id}')">Remove</button></td></tr>`).join('')
+}
+
+function filterG(p,el){gFilter=p;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderGroups()}
+
+async function delGroup(id){if(!confirm('Remove?'))return;await fetch(`${API}/groups/${id}`,{method:'DELETE'});loadGroups();loadStats()}
+
+async function loadCampaigns(){
+  try{
+    const r=await fetch(`${API}/campaigns`);const d=await r.json()
+    const tb=document.getElementById('cBody')
+    if(!d.success||!d.campaigns?.length){tb.innerHTML='<tr><td colspan="6"><div class="empty"><div class="ico">📊</div>No campaigns yet</div></td></tr>';return}
+    tb.innerHTML=d.campaigns.map(c=>`<tr><td><strong>${c.video_title||'Untitled'}</strong></td><td><span class="sb ${c.status==='completed'?'sb-ok':c.status==='running'?'sb-wn':'sb-er'}">${c.status.toUpperCase()}</span></td><td class="mono" style="color:var(--ok)">${c.posted_count}</td><td class="mono" style="color:var(--err)">${c.failed_count}</td><td class="mono">${c.total_groups}</td><td class="txm">${fmtDate(c.created_at)}</td></tr>`).join('')
+  }catch(e){}
+}
+
+function openAddModal(){document.getElementById('addModal').classList.add('open')}
+function closeModal(){document.getElementById('addModal').classList.remove('open')}
+
+function updateHint(){
+  const hints={telegram:'@username or -100xxxxxxxxx (forward msg to @userinfobot)',facebook:'Group numeric ID or URL slug',reddit:'Subreddit name like "technology" (without r/)',discord:'Channel ID (Developer Mode → right-click → Copy ID)',whatsapp:'Group ID ending in @g.us'}
+  document.getElementById('mHint').textContent=hints[document.getElementById('mPlat').value]||''
+}
+
+async function saveGroup(){
+  const platform=document.getElementById('mPlat').value
+  const group_name=document.getElementById('mName').value.trim()
+  const group_id=document.getElementById('mId').value.trim()
+  const niche=document.getElementById('mNiche').value
+  if(!group_name||!group_id){alert('Name and ID required');return}
+  try{
+    const r=await fetch(`${API}/groups`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform,group_id,group_name,niche})})
+    const d=await r.json()
+    if(d.success){closeModal();document.getElementById('mName').value='';document.getElementById('mId').value='';loadGroups();loadStats()}
+    else alert('Error: '+d.error)
+  }catch(e){alert('Server not connected')}
+}
+
+function fmtNum(n){if(!n)return'0';if(n>=1000000)return(n/1000000).toFixed(1)+'M';if(n>=1000)return(n/1000).toFixed(1)+'K';return n.toString()}
+function fmtDate(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}
+
+document.getElementById('addModal').addEventListener('click',function(e){if(e.target===this)closeModal()})
+</script>
+</body>
+</html>

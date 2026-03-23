@@ -1,0 +1,41 @@
+{
+  "name": "content-distributor",
+  "version": "2.0.0",
+  "description": "Auto distribute YouTube & Instagram content — unstoppable enterprise-grade",
+  "main": "src/api/server.js",
+  "scripts": {
+    "start": "node src/api/server.js",
+    "dev": "nodemon src/api/server.js",
+    "worker": "node src/queue/worker.js",
+    "scheduler": "node src/analytics/bestTimeScheduler.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop all",
+    "pm2:restart": "pm2 restart all",
+    "pm2:logs": "pm2 logs",
+    "pm2:monit": "pm2 monit",
+    "pm2:save": "pm2 save",
+    "pm2:startup": "pm2 startup"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "better-sqlite3": "^9.4.3",
+    "bullmq": "^5.1.0",
+    "ioredis": "^5.3.2",
+    "node-telegram-bot-api": "^0.64.0",
+    "snoowrap": "^1.23.0",
+    "discord.js": "^14.14.1",
+    "playwright": "^1.41.0",
+    "whatsapp-web.js": "^1.23.0",
+    "qrcode-terminal": "^0.12.0",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "node-cron": "^3.0.3",
+    "uuid": "^9.0.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
